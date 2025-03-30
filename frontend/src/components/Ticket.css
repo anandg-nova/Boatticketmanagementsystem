@@ -1,0 +1,139 @@
+.ticket-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.ticket-header h2 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.ticket-status {
+  font-size: 0.875rem;
+}
+
+.status-pending {
+  color: #ed8936;
+}
+
+.status-confirmed {
+  color: #48bb78;
+}
+
+.status-cancelled {
+  color: #e53e3e;
+}
+
+.ticket-details {
+  margin-bottom: 2rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #718096;
+  font-weight: 500;
+}
+
+.value {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 2rem;
+  background-color: #f7fafc;
+  border-radius: 8px;
+}
+
+.qr-instructions {
+  margin-top: 1rem;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.ticket-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.ticket-footer p {
+  margin: 0;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.download-btn {
+  background-color: #4299e1;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-btn:hover {
+  background-color: #3182ce;
+}
+
+.ticket-error {
+  color: #e53e3e;
+  text-align: center;
+  padding: 2rem;
+  background-color: #fff5f5;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.ticket-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #718096;
+}
+
+@media print {
+  .ticket-container {
+    box-shadow: none;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  .download-btn {
+    display: none;
+  }
+} 
