@@ -1,101 +1,76 @@
 const mongoose = require('mongoose');
 
 const rideSchema = new mongoose.Schema({
-  timeslot: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Timeslot',
-    required: [true, 'Ride must be associated with a timeslot']
+  name: {
+    type: String,
+    required: [true, 'Ride name is required'],
+    trim: true,
+    minlength: [3, 'Ride name must be at least 3 characters long'],
+    maxlength: [100, 'Ride name cannot exceed 100 characters']
   },
-  boat: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Boat',
-    required: [true, 'Ride must be associated with a boat']
+  description: {
+    type: String,
+    required: [true, 'Ride description is required'],
+    trim: true,
+    minlength: [10, 'Description must be at least 10 characters long']
   },
-  rideManager: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Ride must have a ride manager']
+  duration: {
+    type: Number,
+    required: [true, 'Duration is required'],
+    min: [1, 'Duration must be at least 1 minute']
+  },
+  price: {
+    type: Number,
+    required: [true, 'Price is required'],
+    min: [0, 'Price cannot be negative']
+  },
+  capacity: {
+    type: Number,
+    required: [true, 'Capacity is required'],
+    min: [1, 'Capacity must be at least 1']
+  },
+  schedule: {
+    startTime: {
+      type: String,
+      required: [true, 'Start time is required']
+    },
+    endTime: {
+      type: String,
+      required: [true, 'End time is required']
+    },
+    days: [{
+      type: String,
+      enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+      required: [true, 'At least one day must be specified']
+    }]
   },
   status: {
     type: String,
-    enum: ['scheduled', 'in_progress', 'completed', 'cancelled'],
-    default: 'scheduled'
-  },
-  departureTime: Date,
-  returnTime: Date,
-  duration: {
-    type: Number, // in minutes
-    default: 0
-  },
-  actualCapacity: {
-    type: Number,
-    default: 0
-  },
-  weatherConditions: {
-    type: String,
-    enum: ['good', 'moderate', 'poor'],
-    default: 'good'
-  },
-  notes: String,
-  incidents: [{
-    timestamp: Date,
-    description: String,
-    severity: {
-      type: String,
-      enum: ['low', 'medium', 'high']
-    },
-    resolved: {
-      type: Boolean,
-      default: false
-    }
-  }]
+    enum: ['active', 'inactive', 'cancelled'],
+    default: 'active'
+  }
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  timestamps: true
 });
 
-// Index for querying rides by date and status
-rideSchema.index({ departureTime: 1, status: 1 });
+// Index for faster queries
+rideSchema.index({ name: 1 });
+rideSchema.index({ status: 1 });
+rideSchema.index({ 'schedule.days': 1 });
 
-// Virtual populate bookings
-rideSchema.virtual('bookings', {
-  ref: 'Booking',
-  foreignField: 'ride',
-  localField: '_id'
+// Virtual for checking if ride is available
+rideSchema.virtual('isAvailable').get(function() {
+  return this.status === 'active';
 });
 
-// Method to start ride
-rideSchema.methods.startRide = async function() {
-  if (this.status !== 'scheduled') {
-    throw new Error('Ride can only be started when scheduled');
-  }
-
-  this.status = 'in_progress';
-  this.departureTime = new Date();
-  await this.save();
+// Method to check if ride is available on a specific day
+rideSchema.methods.isAvailableOnDay = function(day) {
+  return this.schedule.days.includes(day.toLowerCase());
 };
 
-// Method to end ride
-rideSchema.methods.endRide = async function() {
-  if (this.status !== 'in_progress') {
-    throw new Error('Ride can only be ended when in progress');
-  }
-
-  this.status = 'completed';
-  this.returnTime = new Date();
-  this.duration = Math.round((this.returnTime - this.departureTime) / (1000 * 60));
-  await this.save();
-};
-
-// Method to add incident
-rideSchema.methods.addIncident = async function(description, severity) {
-  this.incidents.push({
-    timestamp: new Date(),
-    description,
-    severity
-  });
-  await this.save();
+// Method to check if ride is available at a specific time
+rideSchema.methods.isAvailableAtTime = function(time) {
+  return time >= this.schedule.startTime && time <= this.schedule.endTime;
 };
 
 const Ride = mongoose.model('Ride', rideSchema);

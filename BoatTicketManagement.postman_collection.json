@@ -19,9 +19,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "raw": "{{baseUrl}}/api/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "path": ["api", "auth", "register"]
             },
             "body": {
               "mode": "raw",
@@ -40,9 +40,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "raw": "{{baseUrl}}/api/auth/login",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "path": ["api", "auth", "login"]
             },
             "body": {
               "mode": "raw",
@@ -108,14 +108,37 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides",
+              "raw": "{{baseUrl}}/api/rides",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "rides"]
+              "path": ["api", "rides"]
             }
           }
         },
         {
-          "name": "Check Availability",
+          "name": "Get Ride by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rides/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rides", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ride-id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Ride",
           "request": {
             "method": "POST",
             "header": [
@@ -129,18 +152,72 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/check-availability",
+              "raw": "{{baseUrl}}/api/rides",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "rides", "check-availability"]
+              "path": ["api", "rides"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"rideId\": \"ride-id\",\n    \"date\": \"2025-03-30\",\n    \"timeSlot\": \"10:00 AM\"\n}"
+              "raw": "{\n    \"name\": \"Sunset Cruise\",\n    \"description\": \"Beautiful sunset cruise along the coast\",\n    \"duration\": 120,\n    \"price\": 50,\n    \"capacity\": 20,\n    \"schedule\": {\n        \"startTime\": \"17:00\",\n        \"endTime\": \"19:00\",\n        \"days\": [\"monday\", \"wednesday\", \"friday\", \"sunday\"]\n    }\n}"
             }
           }
         },
         {
-          "name": "Get Rides by Boat",
+          "name": "Update Ride",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rides/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rides", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ride-id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Ride Name\",\n    \"description\": \"Updated description\",\n    \"duration\": 150,\n    \"price\": 60,\n    \"capacity\": 25,\n    \"schedule\": {\n        \"startTime\": \"18:00\",\n        \"endTime\": \"20:30\",\n        \"days\": [\"tuesday\", \"thursday\", \"saturday\"]\n    }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Ride",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rides/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rides", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ride-id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Ride Bookings",
           "request": {
             "method": "GET",
             "header": [
@@ -150,15 +227,46 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/rides/boat/:boatId",
+              "raw": "{{baseUrl}}/api/rides/:id/bookings",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "rides", "boat", ":boatId"],
+              "path": ["api", "rides", ":id", "bookings"],
               "variable": [
                 {
-                  "key": "boatId",
-                  "value": "boat-id"
+                  "key": "id",
+                  "value": "ride-id"
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Update Ride Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rides/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rides", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ride-id"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"active\"\n}"
             }
           }
         }
@@ -182,13 +290,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/bookings",
+              "raw": "{{baseUrl}}/api/bookings",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "bookings"]
+              "path": ["api", "bookings"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"rideId\": \"ride-id\",\n    \"date\": \"2025-03-30\",\n    \"timeSlot\": \"10:00 AM\",\n    \"quantity\": 2,\n    \"customerName\": \"John Doe\",\n    \"customerEmail\": \"john@example.com\",\n    \"customerPhone\": \"1234567890\"\n}"
+              "raw": "{\n    \"rideId\": \"ride-id\",\n    \"date\": \"2024-03-30\",\n    \"timeSlot\": \"10:00\",\n    \"quantity\": 2,\n    \"customerName\": \"John Doe\",\n    \"customerEmail\": \"john@example.com\",\n    \"customerPhone\": \"1234567890\"\n}"
             }
           }
         },
@@ -203,15 +311,82 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/bookings/:bookingId",
+              "raw": "{{baseUrl}}/api/bookings/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "bookings", ":bookingId"],
+              "path": ["api", "bookings", ":id"],
               "variable": [
                 {
-                  "key": "bookingId",
+                  "key": "id",
                   "value": "booking-id"
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Get Today's Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "today"]
+            }
+          }
+        },
+        {
+          "name": "Validate QR Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "validate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"qrCode\": \"qr-code-string\",\n    \"rideId\": \"ride-id\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Booking Duration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/update-duration",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "update-duration"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingId\": \"booking-id\",\n    \"duration\": 7200\n}"
             }
           }
         },
@@ -221,20 +396,83 @@
             "method": "PATCH",
             "header": [
               {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/bookings/:bookingId/cancel",
+              "raw": "{{baseUrl}}/api/bookings/:id/cancel",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "bookings", ":bookingId", "cancel"],
+              "path": ["api", "bookings", ":id", "cancel"],
               "variable": [
                 {
-                  "key": "bookingId",
+                  "key": "id",
                   "value": "booking-id"
                 }
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cancellationReason\": \"Customer request\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/create-payment-intent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "create-payment-intent"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 100,\n    \"currency\": \"usd\",\n    \"bookingId\": \"booking-id\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirm Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/confirm-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "confirm-payment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paymentIntentId\": \"payment-intent-id\",\n    \"customerName\": \"John Doe\",\n    \"customerEmail\": \"john@example.com\",\n    \"customerPhone\": \"1234567890\"\n}"
             }
           }
         }
@@ -282,11 +520,11 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000"
+      "value": "http://localhost:3001"
     },
     {
       "key": "token",
-      "value": "your-jwt-token"
+      "value": "your-auth-token"
     }
   ]
 } 

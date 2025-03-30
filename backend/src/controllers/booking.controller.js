@@ -5,6 +5,9 @@ const Ticket = require('../models/ticket.model');
 const QRCode = require('qrcode');
 const { logger } = require('../utils/logger');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Ride = require('../models/ride.model');
+const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
 
 // Helper function to generate QR code
 const generateQRCode = async (bookingId) => {
@@ -22,6 +25,33 @@ const generateQRCode = async (bookingId) => {
     throw new AppError('Error generating QR code', 500);
   }
 };
+
+// Get all bookings (for ride manager)
+exports.getAllBookings = catchAsync(async (req, res, next) => {
+  const bookings = await Booking.find()
+    .populate('ride', 'name')
+    .sort({ date: -1, time: -1 });
+
+  const formattedBookings = bookings.map(booking => ({
+    _id: booking._id,
+    rideName: booking.ride.name,
+    date: booking.date,
+    time: booking.time,
+    status: booking.status,
+    quantity: booking.quantity,
+    totalAmount: booking.totalAmount,
+    ticketId: booking.ticketId,
+    startTime: booking.startTime,
+    endTime: booking.endTime
+  }));
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      bookings: formattedBookings
+    }
+  });
+});
 
 exports.createBooking = async (req, res, next) => {
   try {
@@ -198,20 +228,256 @@ exports.cancelBooking = async (req, res, next) => {
   }
 };
 
-exports.getAllBookings = async (req, res, next) => {
+exports.validateQRCode = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('customer', 'name email')
-      .populate('timeslot')
-      .sort('-createdAt');
+    const { qrCode, rideId } = req.body;
 
-    res.status(200).json({
-      status: 'success',
-      results: bookings.length,
-      data: { bookings }
+    // Find the booking by QR code and ride ID
+    const booking = await Booking.findOne({
+      qrCode,
+      ride: rideId,
+      status: 'confirmed'
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid or expired ticket'
+      });
+    }
+
+    // Check if the booking is for today
+    const today = new Date();
+    const bookingDate = new Date(booking.date);
+    if (bookingDate.toDateString() !== today.toDateString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket is not valid for today'
+      });
+    }
+
+    // Check if the booking has already been used
+    if (booking.used) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket has already been used'
+      });
+    }
+
+    // Mark the ticket as used
+    booking.used = true;
+    await booking.save();
+
+    res.json({
+      success: true,
+      bookingId: booking._id,
+      message: 'Ticket validated successfully'
     });
   } catch (error) {
-    logger.error('Get all bookings error:', error);
-    next(error);
+    console.error('QR code validation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to validate ticket'
+    });
   }
-}; 
+};
+
+exports.updateDuration = async (req, res) => {
+  try {
+    const { bookingId, duration } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Update the duration
+    booking.duration = duration;
+
+    // Calculate fare if time-based
+    if (booking.ride.pricingType === 'time-based') {
+      const ratePerHour = booking.ride.price;
+      const hours = duration / 3600; // Convert seconds to hours
+      booking.finalPrice = Math.ceil(hours * ratePerHour);
+    }
+
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: 'Duration updated successfully',
+      booking: {
+        duration: booking.duration,
+        finalPrice: booking.finalPrice
+      }
+    });
+  } catch (error) {
+    console.error('Duration update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update duration'
+    });
+  }
+};
+
+exports.getTodayBookings = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const bookings = await Booking.find({
+      date: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    })
+    .populate('ride')
+    .populate('customer', 'name email phone')
+    .sort({ date: 1 });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Error fetching today\'s bookings:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch today\'s bookings'
+    });
+  }
+};
+
+// Validate ticket
+exports.validateTicket = catchAsync(async (req, res, next) => {
+  const { ticketId } = req.body;
+  
+  const booking = await Booking.findOne({ ticketId });
+  if (!booking) {
+    throw new ApiError('Invalid ticket', 404);
+  }
+
+  if (booking.status !== 'confirmed') {
+    throw new ApiError('Ticket is not confirmed', 400);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      booking: {
+        _id: booking._id,
+        rideName: booking.ride.name,
+        date: booking.date,
+        time: booking.time,
+        status: booking.status,
+        quantity: booking.quantity
+      }
+    }
+  });
+});
+
+// Start ride
+exports.startRide = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.body;
+  
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    throw new ApiError('Booking not found', 404);
+  }
+
+  if (booking.status !== 'confirmed') {
+    throw new ApiError('Cannot start ride for non-confirmed booking', 400);
+  }
+
+  if (booking.startTime) {
+    throw new ApiError('Ride has already started', 400);
+  }
+
+  booking.startTime = new Date();
+  booking.status = 'in_progress';
+  booking.elapsedTime = 0;
+  await booking.save();
+
+  // Set a timeout to automatically stop the ride after 2 minutes
+  setTimeout(async () => {
+    const updatedBooking = await Booking.findById(bookingId);
+    if (updatedBooking && updatedBooking.status === 'in_progress') {
+      updatedBooking.endTime = new Date();
+      updatedBooking.status = 'completed';
+      updatedBooking.elapsedTime = 120; // 2 minutes in seconds
+      await updatedBooking.save();
+    }
+  }, 120000); // 2 minutes in milliseconds
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      booking: {
+        _id: booking._id,
+        startTime: booking.startTime,
+        status: booking.status,
+        elapsedTime: booking.elapsedTime
+      }
+    }
+  });
+});
+
+// Stop ride
+exports.stopRide = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.body;
+  
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    throw new ApiError('Booking not found', 404);
+  }
+
+  if (booking.status !== 'in_progress') {
+    throw new ApiError('Cannot stop ride that is not in progress', 400);
+  }
+
+  booking.endTime = new Date();
+  booking.status = 'completed';
+  booking.elapsedTime = Math.min(booking.elapsedTime || 0, 120); // Cap at 2 minutes
+  await booking.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      booking: {
+        _id: booking._id,
+        endTime: booking.endTime,
+        status: booking.status,
+        elapsedTime: booking.elapsedTime
+      }
+    }
+  });
+});
+
+// Cancel ticket
+exports.cancelTicket = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.body;
+  
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    throw new ApiError('Booking not found', 404);
+  }
+
+  if (booking.status === 'completed') {
+    throw new ApiError('Cannot cancel completed booking', 400);
+  }
+
+  booking.status = 'cancelled';
+  await booking.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      booking: {
+        _id: booking._id,
+        status: booking.status
+      }
+    }
+  });
+}); 

@@ -1,5 +1,5 @@
 import React from 'react';
-import './RideCard.css';
+import '../styles/RideCard.css';
 
 interface RideCardProps {
   id: string;
@@ -11,7 +11,6 @@ interface RideCardProps {
   arrivalTime: string;
   quantity: number;
   onQuantityChange: (id: string, quantity: number) => void;
-  isSelected?: boolean;
 }
 
 const RideCard: React.FC<RideCardProps> = ({
@@ -24,7 +23,6 @@ const RideCard: React.FC<RideCardProps> = ({
   arrivalTime,
   quantity,
   onQuantityChange,
-  isSelected = false
 }) => {
   const handleQuantityChange = (change: number) => {
     const newQuantity = Math.max(0, Math.min(availableSeats, quantity + change));
@@ -32,38 +30,40 @@ const RideCard: React.FC<RideCardProps> = ({
   };
 
   return (
-    <div className={`ride-card ${isSelected ? 'selected' : ''} ${availableSeats === 0 ? 'unavailable' : ''}`}>
+    <div className={`ride-card ${availableSeats === 0 ? 'unavailable' : ''}`}>
       <div className="ride-header">
-        <div className="ride-title">
-          <h3>{name}</h3>
-          <span className="ride-type">{name.includes('VIP') ? 'VIP' : 'Regular'}</span>
-        </div>
+        <h3>{name}</h3>
         <span className="price">₹{price}</span>
       </div>
+      <p className="description">{description}</p>
       <div className="ride-details">
-        <p>{description}</p>
-      </div>
-      <div className="ride-info">
-        <span>Available Seats: {availableSeats}</span>
-        <span>Departure: {departureTime}</span>
-        <span>Arrival: {arrivalTime}</span>
+        <div className="detail">
+          <span className="label">Available Seats:</span>
+          <span className="value">{availableSeats}</span>
+        </div>
+        <div className="detail">
+          <span className="label">Departure:</span>
+          <span className="value">{departureTime}</span>
+        </div>
+        <div className="detail">
+          <span className="label">Arrival:</span>
+          <span className="value">{arrivalTime}</span>
+        </div>
       </div>
       {availableSeats > 0 && (
         <div className="quantity-controls">
-          <button 
+          <button
             onClick={() => handleQuantityChange(-1)}
-            disabled={quantity <= 0}
+            disabled={quantity === 0}
             className="quantity-btn"
-            aria-label="Decrease quantity"
           >
             -
           </button>
           <span className="quantity">{quantity}</span>
-          <button 
+          <button
             onClick={() => handleQuantityChange(1)}
             disabled={quantity >= availableSeats}
             className="quantity-btn"
-            aria-label="Increase quantity"
           >
             +
           </button>

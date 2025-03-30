@@ -1,33 +1,56 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
+  ride: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ride',
+    required: true
+  },
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Booking must belong to a customer']
+    required: true
   },
-  timeslot: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Timeslot',
-    required: [true, 'Booking must be for a timeslot']
+  date: {
+    type: Date,
+    required: true
   },
-  numberOfTickets: {
+  time: {
+    type: String,
+    required: true
+  },
+  quantity: {
     type: Number,
-    required: [true, 'Please specify number of tickets'],
-    min: [1, 'Number of tickets must be at least 1']
+    required: true,
+    min: 1
   },
   totalAmount: {
     type: Number,
-    required: [true, 'Please specify total amount']
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'cancelled', 'in-progress', 'completed'],
+    default: 'pending'
+  },
+  ticketId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  startTime: {
+    type: Date
+  },
+  endTime: {
+    type: Date
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'completed', 'refunded'],
+    enum: ['pending', 'completed', 'failed', 'refunded'],
     default: 'pending'
   },
   paymentId: {
-    type: String,
-    required: [true, 'Payment ID is required']
+    type: String
   },
   bookingStatus: {
     type: String,
@@ -38,8 +61,6 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: [true, 'QR code is required']
   },
-  rideStartTime: Date,
-  rideEndTime: Date,
   duration: {
     type: Number, // in minutes
     default: 0
@@ -55,8 +76,9 @@ const bookingSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Index for querying bookings by customer and date
-bookingSchema.index({ customer: 1, createdAt: -1 });
+// Index for faster queries
+bookingSchema.index({ date: 1, time: 1 });
+bookingSchema.index({ status: 1 });
 
 // Virtual populate tickets
 bookingSchema.virtual('tickets', {
@@ -70,7 +92,7 @@ bookingSchema.methods.calculateRefundAmount = function() {
   if (this.bookingStatus === 'cancelled') {
     // Refund policy: 100% refund if cancelled 24 hours before
     const bookingDate = new Date(this.createdAt);
-    const timeslotDate = new Date(this.timeslot.date);
+    const timeslotDate = new Date(this.date);
     const hoursBeforeRide = (timeslotDate - bookingDate) / (1000 * 60 * 60);
     
     if (hoursBeforeRide >= 24) {

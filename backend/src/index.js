@@ -17,6 +17,7 @@ const pierRoutes = require('./routes/pier.routes');
 const timeslotRoutes = require('./routes/timeslot.routes');
 const reportRoutes = require('./routes/report.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const rideRoutes = require('./routes/ride.routes');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/piers', pierRoutes);
 app.use('/api/timeslots', timeslotRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/rides', rideRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

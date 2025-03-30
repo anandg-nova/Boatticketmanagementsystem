@@ -14,8 +14,8 @@ const { logger } = require('./utils/logger');
 const routes = require('./routes');
 const specs = require('./config/swagger');
 const { errorHandler } = require('./middleware/errorHandler');
-const rideRoutes = require('./routes/rideRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
+const rideRoutes = require('./routes/ride.routes');
+const bookingRoutes = require('./routes/booking.routes');
 
 // Initialize Express app
 const app = express();

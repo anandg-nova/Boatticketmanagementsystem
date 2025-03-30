@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import QRCode from 'qrcode.react';
+import axios from 'axios';
 import './Payment.css';
 
 // Initialize Stripe with proper error handling

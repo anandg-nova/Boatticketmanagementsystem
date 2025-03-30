@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "qrcode.react": "^4.2.0",
+    "react-qr-reader": "^3.0.0-beta-1"
+  }
+}
