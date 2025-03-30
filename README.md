@@ -46,8 +46,8 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/boat-ticket-management.git
-cd boat-ticket-management
+git clone https://github.com/anandg-nova/Boatticketmanagementsystem.git
+cd Boatticketmanagementsystem
 ```
 
 2. Install dependencies:
